@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Paris with Nova – Trip Form</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Simple serif vibe for “Paris” feel -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body style="margin:0;">
+    <div id="root"></div>
+
+    <!-- React & Babel via CDN (no build tooling needed) -->
+    <script
+      src="https://unpkg.com/react@18/umd/react.development.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
+      crossorigin
+    ></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+      const { useState } = React;
+
+      // TODO: put your real email here
+      const YOUR_EMAIL = "nonce.in0nd@simplelogin.com";
+
+      function ParisTripForNova() {
+        const [formData, setFormData] = useState({
+          cousinName: "",
+          email: "",
+          homeAirport: "",
+          dateFlexibility: "",
+          overallBudget: "",
+          walkingComfort: "",
+          stairComfort: "",
+          hotelStyle: "",
+          bedSetup: "",
+          eiffelVibe: "",
+          mustDos: "",
+          niceToHaves: "",
+          foodComfort: "",
+          foodNotes: "",
+          tripPace: "",
+          downtimeNeeds: "",
+          daughterAge: "",
+          daughterEnergy: "",
+          daughterInterests: "",
+          hardNo: "",
+          sideTripInterest: "",
+          anythingElse: "",
+        });
+
+        const handleChange = (field) => (e) => {
+          setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+        };
+
+        const handleEmail = () => {
+          const {
+            cousinName,
+            email,
+            homeAirport,
+            dateFlexibility,
+            overallBudget,
+            walkingComfort,
+            stairComfort,
+            hotelStyle,
+            bedSetup,
+            eiffelVibe,
+            mustDos,
+            niceToHaves,
+            foodComfort,
+            foodNotes,
+            tripPace,
+            downtimeNeeds,
+            daughterAge,
+            daughterEnergy,
+            daughterInterests,
+            hardNo,
+            sideTripInterest,
+            anythingElse,
+          } = formData;
+
+          const subject = encodeURIComponent(
+            `Paris trip answers from ${cousinName || "you"}`
+          );
+
+          const bodyLines = [
+            `Name: ${cousinName}`,
+            `Best email for travel stuff: ${email}`,
+            `Home airport / where you'd fly from: ${homeAirport}`,
+            "",
+            "DATES & BUDGET",
+            "How flexible are your dates around late Aug / early Sept 2025?",
+            dateFlexibility,
+            "",
+            "Overall budget for the Paris part (excluding my contribution to lodging):",
+            overallBudget,
+            "",
+            "MOBILITY & COMFORT",
+            "Walking / standing comfort (city days, lines, museums):",
+            walkingComfort,
+            "",
+            "Comfort with stairs (Eiffel Tower, metro stairs, viewpoints):",
+            stairComfort,
+            "",
+            "WHERE WE STAY",
+            "Hotel / apartment style that feels best for you:",
+            hotelStyle,
+            "",
+            "Preferred bed setup for you and your daughter:",
+            bedSetup,
+            "",
+            "PARIS PRIORITIES",
+            "Eiffel Tower day vibe (how you imagine it):",
+            eiffelVibe,
+            "",
+            "Absolute Paris MUST-DOs (besides Eiffel Tower):",
+            mustDos,
+            "",
+            '"Nice to have if we can fit it in" things:',
+            niceToHaves,
+            "",
+            "FOOD",
+            "Comfort level with mostly vegan meals:",
+            foodComfort,
+            "",
+            "Food notes (picky eating, allergies, 'no thanks' foods, favorite treats):",
+            foodNotes,
+            "",
+            "PACE & ENERGY",
+            "Trip pace preference (slow & cozy vs. see a lot):",
+            tripPace,
+            "",
+            "Downtime / recharge needs:",
+            downtimeNeeds,
+            "",
+            "ABOUT YOUR DAUGHTER",
+            "Age during the trip:",
+            daughterAge,
+            "",
+            "Typical energy level on big days:",
+            daughterEnergy,
+            "",
+            "Things she LOVES (views, rides, animals, art, boats, etc.):",
+            daughterInterests,
+            "",
+            "NON-NEGOTIABLES",
+            "Hard NOs (crowded nightlife, very late dinners, long travel days, etc.):",
+            hardNo,
+            "",
+            "OPTIONAL: SIDE TRIP INTEREST",
+            "If we did ONE quick side trip/day trip from Paris, what sounds fun?",
+            sideTripInterest,
+            "",
+            "ANYTHING ELSE",
+            anythingElse,
+          ];
+
+          const body = encodeURIComponent(bodyLines.join("\n"));
+
+          window.location.href = `mailto:${YOUR_EMAIL}?subject=${subject}&body=${body}`;
+        };
+
+        const styles = {
+          page: {
+            minHeight: "100vh",
+            background:
+              "linear-gradient(135deg, #faf6f1 0%, #f5ebe0 50%, #edede9 100%)",
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            color: "#3d3d3d",
+            padding: "2rem 1rem",
+            boxSizing: "border-box",
+          },
+          container: {
+            maxWidth: "800px",
+            margin: "0 auto",
+            background: "rgba(255,255,255,0.9)",
+            borderRadius: "1.25rem",
+            padding: "2.5rem 2rem",
+            boxShadow: "0 10px 40px rgba(92,73,52,0.15)",
+            border: "1px solid rgba(139,109,76,0.18)",
+            backdropFilter: "blur(10px)",
+          },
+          header: {
+            textAlign: "center",
+            marginBottom: "2rem",
+          },
+          title: {
+            fontSize: "2.3rem",
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            fontWeight: 300,
+            color: "#5c4934",
+            margin: 0,
+          },
+          subtitle: {
+            marginTop: "0.75rem",
+            fontSize: "1rem",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: "#8b6d4c",
+          },
+          section: {
+            marginBottom: "1.75rem",
+            paddingBottom: "1.25rem",
+            borderBottom: "1px solid rgba(139,109,76,0.15)",
+          },
+          sectionTitleRow: {
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            marginBottom: "0.75rem",
+          },
+          sectionIcon: {
+            fontSize: "1.5rem",
+          },
+          sectionTitle: {
+            fontSize: "1.2rem",
+            fontWeight: 500,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "#5c4934",
+            margin: 0,
+          },
+          sectionHint: {
+            fontSize: "0.9rem",
+            color: "#8b6d4c",
+            fontStyle: "italic",
+            marginBottom: "0.75rem",
+          },
+          label: {
+            display: "block",
+            fontSize: "0.95rem",
+            fontWeight: 500,
+            color: "#5c4934",
+            marginBottom: "0.35rem",
+          },
+          input: {
+            width: "100%",
+            padding: "0.7rem 0.9rem",
+            borderRadius: "0.75rem",
+            border: "1px solid rgba(139,109,76,0.4)",
+            background: "rgba(255,255,255,0.9)",
+            fontFamily: "inherit",
+            fontSize: "0.95rem",
+            boxSizing: "border-box",
+            marginBottom: "0.8rem",
+            outline: "none",
+          },
+          textarea: {
+            width: "100%",
+            padding: "0.8rem 0.9rem",
+            borderRadius: "0.75rem",
+            border: "1px solid rgba(139,109,76,0.4)",
+            background: "rgba(255,255,255,0.9)",
+            fontFamily: "inherit",
+            fontSize: "0.95rem",
+            boxSizing: "border-box",
+            minHeight: "70px",
+            resize: "vertical",
+            outline: "none",
+            marginBottom: "0.8rem",
+          },
+          smallRow: {
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "1rem",
+          },
+          buttonRow: {
+            marginTop: "1.5rem",
+            textAlign: "center",
+          },
+          button: {
+            padding: "0.9rem 2.5rem",
+            borderRadius: "999px",
+            border: "none",
+            background:
+              "linear-gradient(135deg, #8b6d4c 0%, #5c4934 50%, #3f3121 100%)",
+            color: "#fff",
+            fontFamily: "inherit",
+            fontSize: "0.95rem",
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+            boxShadow: "0 8px 25px rgba(92,73,52,0.4)",
+          },
+          tinyNote: {
+            marginTop: "0.75rem",
+            fontSize: "0.8rem",
+            color: "#8b6d4c",
+          },
+        };
+
+        return (
+          <div style={styles.page}>
+            <div style={styles.container}>
+              <header style={styles.header}>
+                <h1 style={styles.title}>Paris with Nova</h1>
+                <div style={styles.subtitle}>🗼 Eiffel Tower Edition</div>
+              </header>
+
+              {/* WHO & FROM WHERE */}
+              <section style={styles.section}>
+                <div style={styles.sectionTitleRow}>
+                  <span style={styles.sectionIcon}>👋🏾</span>
+                  <h2 style={styles.sectionTitle}>You two</h2>
+                </div>
+                <p style={styles.sectionHint}>
+                  Just enough info so I can plan around *you*, not just the map.
+                </p>
+                <label style={styles.label}>Your name</label>
+                <input
+                  style={styles.input}
+                  value={formData.cousinName}
+                  onChange={handleChange("cousinName")}
+                  placeholder="First name (or whatever you go by)"
+                />
+
+                <label style={styles.label}>Best email for travel stuff</label>
+                <input
+                  style={styles.input}
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange("email")}
+                  placeholder="So I can send you options"
+                />
+
+                <label style={styles.label}>
+                  Home airport / where you'd likely fly from
+                </label>
+                <input
+                  style={styles.input}
+                  value={formData.homeAirport}
+                  onChange={handleChange("homeAirport")}
+                  placeholder="Example: LAX, SFO, ATL..."
+                />
+              </section>
+
+              {/* DATES & BUDGET */}
+              <section style={styles.section}>
+                <div style={styles.sectionTitleRow}>
+                  <span style={styles.sectionIcon}>📅</span>
+                  <h2 style={styles.sectionTitle}>Dates & budget</h2>
+                </div>
+                <p style={styles.sectionHint}>
+                  Trip is late August / early September 2025. Just give your
+                  best guess and comfort level.
+                </p>
+
+                <label style={styles.label}>
+                  How flexible are your dates around that time?
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.dateFlexibility}
+                  onChange={handleChange("dateFlexibility")}
+                  placeholder="E.g., tied to school vs. can shift a few days."
+                />
+
+                <label style={styles.label}>
+                  Rough overall budget for the Paris portion (excluding my lodging
+                  contribution)
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.overallBudget}
+                  onChange={handleChange("overallBudget")}
+                  placeholder="Ballpark is fine — what feels doable for you?"
+                />
+              </section>
+
+              {/* MOBILITY & COMFORT */}
+              <section style={styles.section}>
+                <div style={styles.sectionTitleRow}>
+                  <span style={styles.sectionIcon}>🚶‍♀️</span>
+                  <h2 style={styles.sectionTitle}>Mobility & comfort</h2>
+                </div>
+
+                <label style={styles.label}>
+                  Walking/standing comfort (city days, lines, museums)
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.walkingComfort}
+                  onChange={handleChange("walkingComfort")}
+                  placeholder="Short city days only / fine to walk a lot with breaks, etc."
+                />
+
+                <label style={styles.label}>
+                  Stairs (metro, Eiffel Tower, viewpoints, etc.)
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.stairComfort}
+                  onChange={handleChange("stairComfort")}
+                  placeholder="Any knee, back, or health stuff I should plan around?"
+                />
+              </section>
+
+              {/* WHERE WE STAY */}
+              <section style={styles.section}>
+                <div style={styles.sectionTitleRow}>
+                  <span style={styles.sectionIcon}>🏨</span>
+                  <h2 style={styles.sectionTitle}>Where we stay</h2>
+                </div>
+
+                <label style={styles.label}>
+                  What kind of place feels best for you?
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.hotelStyle}
+                  onChange={handleChange("hotelStyle")}
+                  placeholder="Simple/clean, apartment w/ kitchen, cute hotel near Eiffel Tower, etc."
+                />
+
+                <label style={styles.label}>Bed setup for you & your daughter</label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.bedSetup}
+                  onChange={handleChange("bedSetup")}
+                  placeholder="Separate beds? One big bed? Any snoring/tossing considerations?"
+                />
+              </section>
+
+              {/* PARIS PRIORITIES */}
+              <section style={styles.section}>
+                <div style={styles.sectionTitleRow}>
+                  <span style={styles.sectionIcon}>🗼</span>
+                  <h2 style={styles.sectionTitle}>Paris & Eiffel Tower vibes</h2>
+                </div>
+                <p style={styles.sectionHint}>
+                  We’re building this trip around Paris so your daughter can see
+                  the Eiffel Tower.
+                </p>
+
+                <label style={styles.label}>
+                  When you imagine your Eiffel Tower day, what does it look like?
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.eiffelVibe}
+                  onChange={handleChange("eiffelVibe")}
+                  placeholder="Day vs. night lights, going up vs. just viewing, picnic, photos, etc."
+                />
+
+                <label style={styles.label}>
+                  Besides the Eiffel Tower, what are your absolute Paris must-dos?
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.mustDos}
+                  onChange={handleChange("mustDos")}
+                  placeholder="Louvre, river cruise, cafés, shopping, Disneyland, etc."
+                />
+
+                <label style={styles.label}>
+                  “Nice to have if we can fit it in” (not dealbreakers)
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.niceToHaves}
+                  onChange={handleChange("niceToHaves")}
+                  placeholder="Little dreams, fun extras, or vibes you’d love."
+                />
+              </section>
+
+              {/* FOOD */}
+              <section style={styles.section}>
+                <div style={styles.sectionTitleRow}>
+                  <span style={styles.sectionIcon}>🥐</span>
+                  <h2 style={styles.sectionTitle}>Food</h2>
+                </div>
+                <p style={styles.sectionHint}>
+                  I’ll be keeping things mostly vegan, but I want you both fed &
+                  happy.
+                </p>
+
+                <label style={styles.label}>
+                  How comfortable are you with mostly vegan restaurants?
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.foodComfort}
+                  onChange={handleChange("foodComfort")}
+                  placeholder="Totally fine / prefer regular options too / dealbreakers, etc."
+                />
+
+                <label style={styles.label}>
+                  Food notes (picky eating, allergies, favorites, “no way” foods)
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.foodNotes}
+                  onChange={handleChange("foodNotes")}
+                  placeholder="For both you and your daughter."
+                />
+              </section>
+
+              {/* PACE & ENERGY */}
+              <section style={styles.section}>
+                <div style={styles.sectionTitleRow}>
+                  <span style={styles.sectionIcon}>🌙</span>
+                  <h2 style={styles.sectionTitle}>Pace & downtime</h2>
+                </div>
+
+                <label style={styles.label}>
+                  Trip pace that feels good for you
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.tripPace}
+                  onChange={handleChange("tripPace")}
+                  placeholder="Slow & cozy / a mix / see a lot each day with breaks, etc."
+                />
+
+                <label style={styles.label}>
+                  Any downtime / recharge needs I should plan around?
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.downtimeNeeds}
+                  onChange={handleChange("downtimeNeeds")}
+                  placeholder="Naps, introvert time, early nights, quiet mornings, etc."
+                />
+              </section>
+
+              {/* ABOUT DAUGHTER */}
+              <section style={styles.section}>
+                <div style={styles.sectionTitleRow}>
+                  <span style={styles.sectionIcon}>⭐</span>
+                  <h2 style={styles.sectionTitle}>About your daughter</h2>
+                </div>
+
+                <div style={styles.smallRow}>
+                  <div>
+                    <label style={styles.label}>How old will she be?</label>
+                    <input
+                      style={styles.input}
+                      value={formData.daughterAge}
+                      onChange={handleChange("daughterAge")}
+                      placeholder="Age during the trip"
+                    />
+                  </div>
+                  <div>
+                    <label style={styles.label}>
+                      Her usual energy level on big days
+                    </label>
+                    <input
+                      style={styles.input}
+                      value={formData.daughterEnergy}
+                      onChange={handleChange("daughterEnergy")}
+                      placeholder="Needs breaks / goes all day / etc."
+                    />
+                  </div>
+                </div>
+
+                <label style={styles.label}>
+                  What kinds of experiences light her up?
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.daughterInterests}
+                  onChange={handleChange("daughterInterests")}
+                  placeholder="Views, animals, rides, science, art, boats, castles, etc."
+                />
+              </section>
+
+              {/* NON-NEGOTIABLES & OPTIONAL SIDE TRIP */}
+              <section style={styles.section}>
+                <div style={styles.sectionTitleRow}>
+                  <span style={styles.sectionIcon}>⛔</span>
+                  <h2 style={styles.sectionTitle}>Non-negotiables & extras</h2>
+                </div>
+
+                <label style={styles.label}>
+                  Hard NOs (for either of you)
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.hardNo}
+                  onChange={handleChange("hardNo")}
+                  placeholder="Crowded nightlife, very late dinners, long travel days, etc."
+                />
+
+                <label style={styles.label}>
+                  OPTIONAL: If we did one quick side trip/day trip from Paris,
+                  does anything sound fun?
+                </label>
+                <textarea
+                  style={styles.textarea}
+                  value={formData.sideTripInterest}
+                  onChange={handleChange("sideTripInterest")}
+                  placeholder="Totally ok to say 'No, I just want Paris!'"
+                />
+              </section>
+
+              {/* ANYTHING ELSE */}
+              <section style={styles.section}>
+                <div style={styles.sectionTitleRow}>
+                  <span style={styles.sectionIcon}>💌</span>
+                  <h2 style={styles.sectionTitle}>Anything else?</h2>
+                </div>
+
+                <textarea
+                  style={styles.textarea}
+                  value={formData.anythingElse}
+                  onChange={handleChange("anythingElse")}
+                  placeholder="Random thoughts, worries, or little dreams you want me to know."
+                />
+              </section>
+
+              {/* EMAIL BUTTON */}
+              <div style={styles.buttonRow}>
+                <button type="button" style={styles.button} onClick={handleEmail}>
+                  Email these answers to Lib
+                </button>
+                <div style={styles.tinyNote}>
+                  This opens your email app with everything pre-filled — just hit
+                  send. 💌
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<ParisTripForNova />);
+    </script>
+  </body>
+</html>
