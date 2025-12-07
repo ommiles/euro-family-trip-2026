@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { trackPageView, trackEvent } from "./analytics";
 
 const steps = [
   { id: "budget", label: "Budget", icon: "💸" },
@@ -10,6 +11,7 @@ const steps = [
   { id: "comfort", label: "Comfort", icon: "🧠" },
   { id: "paris", label: "Paris", icon: "🗼" },
   { id: "nova", label: "Nova", icon: "🧒🏽" },
+  { id: "solo", label: "R & R", icon: "🎯" },
   { id: "summary", label: "Summary", icon: "📝" },
 ];
 
@@ -86,12 +88,19 @@ const stayRanks = [
 ];
 
 const sensitivities = [
+  "Food allergies / intolerances (aside from vegan)",
   "Noise (street, doors, neighbors)",
   "Crowds",
   "Strong scents / products",
   "Lighting (too bright / flicker)",
   "Cleanliness / contamination",
   "Unclear rules / surprises",
+  "Asymmetry / things feeling 'off'",
+  "Repetitive sounds or patterns",
+  "Need for routine / predictability",
+  "Perfectionism triggers",
+  "Uncertainty / ambiguity",
+  "Checking behaviors / reassurance needs",
 ];
 
 const novaRanks = [
@@ -195,7 +204,6 @@ const belgiumActivitiesByCategory = [
       "De Panne – Plopsaqua De Panne (Water Park) 💦",
       "Brussels – BELvue Belgium (Kid Friendly)",
       "Multiple Cities – Parks & Playgrounds 🌳",
-      "Rixensart – Garden of Lights 🌸",
       "Brussels – Comic Strip / Comic Book Walls 🎨",
     ],
   },
@@ -205,7 +213,6 @@ const belgiumActivitiesByCategory = [
       "Ardennes Region – Hiking & nature ⛰️",
       "Nationwide – Local festivals & events 🎪",
       "Keukenhof / Belgian Border – See the Tulips 🌷",
-      "Rixensart – Garden of Lights 🌸",
     ],
   },
   {
@@ -348,6 +355,7 @@ const getDefaultAnswers = () => ({
   sensitivities: {},
   walking: 6,
   stairs: 6,
+  heights: 6,
   eiffelTime: "",
   eiffelUp: "",
   eiffelPicnic: "",
@@ -356,6 +364,11 @@ const getDefaultAnswers = () => ({
   parisMusts: [],
   novaRanks: {},
   novaEnergy: 7,
+  tylerSoloDay: "",
+  tylerNovaDay: "",
+  libSoloDay: "",
+  soloDayTiming: "",
+  soloDayNotes: "",
   summaryText: "",
 });
 
@@ -405,6 +418,15 @@ export default function App() {
     }
   }, [step, answers]);
 
+  // Track page views with Google Analytics whenever step changes
+  useEffect(() => {
+    const currentStep = steps.find((s) => s.id === step);
+    const pageTitle = currentStep
+      ? `${currentStep.label} - Euro Space Camp Trip Planner`
+      : "Euro Space Camp Trip Planner";
+    trackPageView(`/step/${step}`, pageTitle);
+  }, [step]);
+
   // Clear all answers and reset to initial state
   const clearAll = () => {
     if (
@@ -437,6 +459,10 @@ export default function App() {
       } catch (error) {
         console.error("Error clearing localStorage:", error);
       }
+      // Track clear all action
+      trackEvent("clear_all", {
+        current_step: step,
+      });
     }
   };
 
@@ -452,6 +478,7 @@ export default function App() {
       comfort: "Comfort",
       paris: "Paris",
       nova: "Nova",
+      solo: "R & R",
       summary: "Summary",
     };
     const stepLabel = stepLabels[step] || step;
@@ -514,6 +541,7 @@ export default function App() {
           fieldsToClear.sensitivities = { ...defaultAnswers.sensitivities };
           fieldsToClear.walking = defaultAnswers.walking;
           fieldsToClear.stairs = defaultAnswers.stairs;
+          fieldsToClear.heights = defaultAnswers.heights;
           break;
         case "paris":
           fieldsToClear.eiffelTime = defaultAnswers.eiffelTime;
@@ -528,6 +556,13 @@ export default function App() {
           // Create new object instance to ensure React detects the change
           fieldsToClear.novaRanks = { ...defaultAnswers.novaRanks };
           fieldsToClear.novaEnergy = defaultAnswers.novaEnergy;
+          break;
+        case "solo":
+          fieldsToClear.tylerSoloDay = defaultAnswers.tylerSoloDay;
+          fieldsToClear.tylerNovaDay = defaultAnswers.tylerNovaDay;
+          fieldsToClear.libSoloDay = defaultAnswers.libSoloDay;
+          fieldsToClear.soloDayTiming = defaultAnswers.soloDayTiming;
+          fieldsToClear.soloDayNotes = defaultAnswers.soloDayNotes;
           break;
         case "summary":
           fieldsToClear.summaryText = defaultAnswers.summaryText;
@@ -547,6 +582,11 @@ export default function App() {
       });
       // Clear errors for this step
       setErrors({});
+      // Track clear section action
+      trackEvent("clear_section", {
+        step_id: step,
+        step_label: stepLabel,
+      });
     }
   };
 
@@ -565,13 +605,71 @@ export default function App() {
       });
       return newErrors;
     });
+
+    // Track option selections (not text inputs)
+    Object.keys(patch).forEach((key) => {
+      const value = patch[key];
+      // Track single-select option clicks (exclude text inputs and notes)
+      const optionFields = [
+        "budgetTotal",
+        "veganMeals",
+        "budgetFocus",
+        "tripDuration",
+        "campTransport",
+        "campLocationPreference",
+        "parisDuration",
+        "trainPreference",
+        "carRentalPreference",
+        "publicTransportPreference",
+        "transportationStyle",
+        "eiffelTime",
+        "eiffelUp",
+        "eiffelPicnic",
+        "eiffelPhotos",
+        "tylerSoloDay",
+        "tylerNovaDay",
+        "libSoloDay",
+        "soloDayTiming",
+      ];
+
+      if (optionFields.includes(key) && value) {
+        trackEvent("option_selected", {
+          step_id: step,
+          step_label: steps.find((s) => s.id === step)?.label || step,
+          field_name: key,
+          option_value: value,
+        });
+      }
+
+      // Track slider/range changes (walking, stairs, heights, novaEnergy)
+      const sliderFields = ["walking", "stairs", "heights", "novaEnergy"];
+      if (sliderFields.includes(key)) {
+        trackEvent("slider_changed", {
+          step_id: step,
+          step_label: steps.find((s) => s.id === step)?.label || step,
+          field_name: key,
+          value: value,
+        });
+      }
+    });
   };
 
   const toggleMulti = (key, value) => {
     setAnswers((prev) => {
       const current = new Set(prev[key] || []);
-      if (current.has(value)) current.delete(value);
+      const wasSelected = current.has(value);
+      if (wasSelected) current.delete(value);
       else current.add(value);
+
+      // Track checkbox selection
+      trackEvent("checkbox_toggled", {
+        step_id: step,
+        step_label: steps.find((s) => s.id === step)?.label || step,
+        field_name: key,
+        option_value: value,
+        action: wasSelected ? "unchecked" : "checked",
+      });
+
       return { ...prev, [key]: Array.from(current) };
     });
     // Clear error for this field when user interacts
@@ -652,18 +750,11 @@ export default function App() {
       newErrors.belgiumOtherCity = "Please specify the city or region";
     }
 
-    // Check that at least one activity is selected per category
-    const selectedActivities = new Set(answers.belgiumActivities || []);
-    belgiumActivitiesByCategory.forEach((categoryGroup) => {
-      const hasSelection = categoryGroup.activities.some((activity) =>
-        selectedActivities.has(activity)
-      );
-      if (!hasSelection) {
-        newErrors[
-          `belgiumActivities_${categoryGroup.category}`
-        ] = `Please select at least one activity from ${categoryGroup.category}`;
-      }
-    });
+    // Check that at least 5 activities are selected in total
+    const selectedActivities = answers.belgiumActivities || [];
+    if (selectedActivities.length < 5) {
+      newErrors.belgiumActivities = `Please select at least 5 activities of interest`;
+    }
 
     return newErrors;
   };
@@ -719,12 +810,27 @@ export default function App() {
       newErrors.envComfort =
         "Please select at least one environment & comfort preference";
     }
-    if (
-      !answers.sensitivities ||
-      Object.keys(answers.sensitivities).length === 0
-    ) {
-      newErrors.sensitivities =
-        "Please select at least one sensitivity to indicate";
+    // Sensitivities section is optional - no validation required
+    return newErrors;
+  };
+
+  const validateSoloStep = () => {
+    const newErrors = {};
+    if (!answers.tylerSoloDay) {
+      newErrors.tylerSoloDay =
+        "Please select whether Tyler is interested in a solo day";
+    }
+    if (!answers.tylerNovaDay) {
+      newErrors.tylerNovaDay =
+        "Please select whether Tyler & Nova want a mommy-daughter day";
+    }
+    if (!answers.libSoloDay) {
+      newErrors.libSoloDay =
+        "Please select whether Lib should have a solo day/night";
+    }
+    if (!answers.soloDayTiming) {
+      newErrors.soloDayTiming =
+        "Please select when solo days would be a good time";
     }
     return newErrors;
   };
@@ -743,6 +849,8 @@ export default function App() {
         return validateDatesStep();
       case "comfort":
         return validateComfortStep();
+      case "solo":
+        return validateSoloStep();
       default:
         return {}; // Other steps are optional
     }
@@ -774,6 +882,7 @@ export default function App() {
       sensitivities,
       walking,
       stairs,
+      heights,
       eiffelTime,
       eiffelUp,
       eiffelPicnic,
@@ -782,6 +891,11 @@ export default function App() {
       parisMusts,
       novaRanks,
       novaEnergy,
+      tylerSoloDay,
+      tylerNovaDay,
+      libSoloDay,
+      soloDayTiming,
+      soloDayNotes,
     } = answers;
 
     const formatRankBlock = (obj) =>
@@ -927,6 +1041,7 @@ Mobility
 --------
 - Walking / standing comfort: ${walking}/10
 - Stairs comfort: ${stairs}/10
+- Heights comfort: ${heights}/10
 
 Paris & Eiffel Tower Day
 ------------------------
@@ -949,6 +1064,16 @@ Nova – Priorities (1 = favorite, 5 = low priority)
 ${formatRankBlock(novaRanks)}
 - Big-day energy: ${novaEnergy}/10
 
+Solo Days & Personal Time
+--------------------------
+- Tyler interested in solo day (Lib with Nova): ${
+      tylerSoloDay || "Not specified yet"
+    }
+- Tyler & Nova mommy-daughter day: ${tylerNovaDay || "Not specified yet"}
+- Good time for Lib solo day/night: ${libSoloDay || "Not specified yet"}
+- Solo day timing preferences: ${soloDayTiming || "Not specified yet"}
+${soloDayNotes ? `- Solo day notes: ${soloDayNotes}` : ""}
+
 Vegan Travel Note
 -----------------
 We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep supermarket-friendly options ready for train days and lower-energy moments.
@@ -958,6 +1083,11 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
 
     update({ summaryText: body });
     setStep("summary");
+    // Track summary generation
+    trackEvent("summary_generated", {
+      summary_length: body.length,
+      completed_steps: steps.length - 1, // All steps except summary
+    });
   };
 
   const copySummary = () => {
@@ -967,6 +1097,10 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
     }
     navigator.clipboard.writeText(answers.summaryText);
     alert("Copied summary to clipboard.");
+    // Track summary copy
+    trackEvent("summary_copied", {
+      summary_length: answers.summaryText.length,
+    });
   };
 
   const emailSummary = () => {
@@ -979,6 +1113,10 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
     const link = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(
       subject
     )}&body=${encodeURIComponent(answers.summaryText)}`;
+    // Track summary email
+    trackEvent("summary_emailed", {
+      summary_length: answers.summaryText.length,
+    });
     window.location.href = link;
     // Show success feedback
     setEmailSent(true);
@@ -1003,6 +1141,12 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
     const stepErrors = validateStep(step);
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors);
+      // Track validation error
+      trackEvent("step_validation_error", {
+        step_id: step,
+        step_label: steps.find((s) => s.id === step)?.label || step,
+        error_count: Object.keys(stepErrors).length,
+      });
       // Scroll to first error
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
@@ -1014,6 +1158,15 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
     const currentIndex = steps.findIndex((s) => s.id === step);
     if (currentIndex < steps.length - 1) {
       const nextStep = steps[currentIndex + 1];
+      // Track step completion
+      trackEvent("step_completed", {
+        step_id: step,
+        step_label: steps.find((s) => s.id === step)?.label || step,
+        next_step_id: nextStep.id,
+        next_step_label: nextStep.label,
+        step_number: currentIndex + 1,
+        total_steps: steps.length,
+      });
       if (nextStep.id === "summary") {
         // Generate summary before going to summary step
         generateSummary();
@@ -1039,6 +1192,15 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
       const stepErrors = validateStep(step);
       if (Object.keys(stepErrors).length > 0) {
         setErrors(stepErrors);
+        // Track validation error
+        trackEvent("step_validation_error", {
+          step_id: step,
+          step_label: steps.find((s) => s.id === step)?.label || step,
+          target_step_id: stepId,
+          target_step_label:
+            steps.find((s) => s.id === stepId)?.label || stepId,
+          error_count: Object.keys(stepErrors).length,
+        });
         // Scroll to top to show errors
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
@@ -1047,6 +1209,20 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
 
     // Clear errors if validation passes or navigating backwards
     setErrors({});
+
+    // Track step navigation
+    trackEvent("step_navigated", {
+      from_step_id: step,
+      from_step_label: steps.find((s) => s.id === step)?.label || step,
+      to_step_id: stepId,
+      to_step_label: steps.find((s) => s.id === stepId)?.label || stepId,
+      navigation_direction:
+        targetIndex > currentIndex
+          ? "forward"
+          : targetIndex < currentIndex
+          ? "backward"
+          : "same",
+    });
 
     if (stepId === "summary") {
       // Generate summary before going to summary step
@@ -1172,13 +1348,14 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
           Travel Dates & Duration
         </h1>
         <p className="text-sm text-slate-500">
-          Help us plan the timing and logistics of your trip
+          Let's plan the timing and logistics of the full trip (including Euro
+          Space Camp).
         </p>
       </section>
 
       <section className="space-y-3 text-center">
         <h2 className="text-lg font-semibold text-slate-800">
-          Trip duration preference
+          Total Trip Duration Preference
         </h2>
         {errors.tripDuration && (
           <p className="text-xs text-red-600 font-medium">
@@ -1250,6 +1427,14 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
                   ...prev,
                   preferredDates: newPreferredDates,
                 }));
+                // Track date selection
+                trackEvent("date_selected", {
+                  step_id: step,
+                  step_label: "Dates",
+                  field_name: "preferredDates",
+                  date_type: "from",
+                  date_value: e.target.value,
+                });
                 // Validate and update errors in the same batch
                 const dateError = validatePreferredDates(newPreferredDates);
                 setErrors((prev) => {
@@ -1293,6 +1478,14 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
                   ...prev,
                   preferredDates: newPreferredDates,
                 }));
+                // Track date selection
+                trackEvent("date_selected", {
+                  step_id: step,
+                  step_label: "Dates",
+                  field_name: "preferredDates",
+                  date_type: "to",
+                  date_value: e.target.value,
+                });
                 // Validate and update errors in the same batch
                 const dateError = validatePreferredDates(newPreferredDates);
                 setErrors((prev) => {
@@ -1723,8 +1916,9 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
           Belgium Preferences
         </h1>
         <p className="text-sm text-slate-500">
-          Help us plan your time in Belgium (focus is on Paris, so this is
-          limited)
+          Let's plan your time in Belgium.
+          <br />
+          Go wild and pick as many as you want!
         </p>
       </section>
 
@@ -1814,32 +2008,25 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
             Activities of interest
           </h2>
           <p className="text-xs text-slate-500 border-slate-200 pb-3">
-            Select any activities or experiences you'd like to do in Belgium
+            Select any activities or experiences you'd like to do in Belgium.
           </p>
         </div>
+        {errors.belgiumActivities && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 mb-4">
+            <p className="text-sm text-red-700 font-medium">
+              {errors.belgiumActivities}
+            </p>
+          </div>
+        )}
         <div className="space-y-6">
           {belgiumActivitiesByCategory.map((categoryGroup) => {
-            const categoryErrorKey = `belgiumActivities_${categoryGroup.category}`;
-            const hasError = errors[categoryErrorKey];
             return (
               <div key={categoryGroup.category} className="space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                   <h3 className="text-base font-semibold text-slate-700 text-left">
                     {categoryGroup.category}
                   </h3>
-                  {hasError && (
-                    <p className="text-xs text-red-600 font-medium">
-                      {errors[categoryErrorKey]}
-                    </p>
-                  )}
                 </div>
-                {hasError && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-2">
-                    <p className="text-xs text-red-700">
-                      Please select at least one activity from this category
-                    </p>
-                  </div>
-                )}
                 <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
                   {categoryGroup.activities.map((activity) => {
                     const selected = (answers.belgiumActivities || []).includes(
@@ -1858,12 +2045,23 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
                           type="checkbox"
                           checked={selected}
                           onChange={() => {
+                            // Calculate new count after toggle
+                            const currentActivities =
+                              answers.belgiumActivities || [];
+                            const newSelected = selected
+                              ? currentActivities.filter((a) => a !== activity)
+                              : [...currentActivities, activity];
+
                             toggleMulti("belgiumActivities", activity);
-                            // Clear category error when an activity is selected
-                            if (errors[categoryErrorKey]) {
+
+                            // Clear error when 5 or more activities are selected
+                            if (
+                              newSelected.length >= 5 &&
+                              errors.belgiumActivities
+                            ) {
                               setErrors((prev) => {
                                 const newErrors = { ...prev };
-                                delete newErrors[categoryErrorKey];
+                                delete newErrors.belgiumActivities;
                                 return newErrors;
                               });
                             }
@@ -1902,9 +2100,11 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
         Experience Priorities
       </h1>
       <p className="text-sm text-slate-500 text-center">
-        For anything that sounds appealing, give it a number from{" "}
-        <strong>1 (must-do)</strong> to <strong>5 (nice-to-have)</strong>. Leave
-        it blank if you don't care either way.
+        For anything that sounds appealing (Paris, Belgium, etc.), give it a
+        number from <strong>1 (must-do)</strong> to{" "}
+        <strong>5 (nice-to-have)</strong>.
+        <br />
+        Leave it as-is if you don't care either way.
       </p>
 
       {/* Belgium Images Gallery */}
@@ -1940,14 +2140,22 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
             key={label}
             label={label}
             value={answers.experienceRanks[label] || ""}
-            onChange={(v) =>
+            onChange={(v) => {
               update({
                 experienceRanks: {
                   ...answers.experienceRanks,
                   [label]: v,
                 },
-              })
-            }
+              });
+              // Track ranking change
+              trackEvent("ranking_changed", {
+                step_id: step,
+                step_label: "Vibe",
+                field_name: "experienceRanks",
+                item_label: label,
+                rank_value: v,
+              });
+            }}
           />
         ))}
       </div>
@@ -1959,10 +2167,11 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
       <h1 className="text-xl font-serif tracking-wide text-slate-900">
         Accommodation Style
       </h1>
-      <p className="text-sm text-slate-500 text-center">
+      <p className="text-sm text-slate-500 text-center border-b border-slate-200 pb-3">
         Same idea: <strong>1 = ideal for this trip</strong>,{" "}
-        <strong>5 = lowest priority</strong>. Blank means “let’s mostly skip
-        this”.
+        <strong>5 = lowest priority</strong>.
+        <br />
+        As-is means “let’s mostly skip this”.
       </p>
       <div className="space-y-3">
         {stayRanks.map((label) => (
@@ -1970,14 +2179,22 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
             key={label}
             label={label}
             value={answers.stayRanks[label] || ""}
-            onChange={(v) =>
+            onChange={(v) => {
               update({
                 stayRanks: {
                   ...answers.stayRanks,
                   [label]: v,
                 },
-              })
-            }
+              });
+              // Track ranking change
+              trackEvent("ranking_changed", {
+                step_id: step,
+                step_label: "Stay",
+                field_name: "stayRanks",
+                item_label: label,
+                rank_value: v,
+              });
+            }}
           />
         ))}
       </div>
@@ -1990,8 +2207,10 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
         <h1 className="text-xl font-serif tracking-wide text-slate-900">
           Environment & Comfort
         </h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 border-b border-slate-200 pb-3">
           Think "what helps me exhale in a new place?"
+          <br />
+          Pick as many as you want!
         </p>
         {errors.envComfort && (
           <p className="text-xs text-red-600 font-medium">
@@ -2049,6 +2268,14 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
                 if (!checked) delete copy[label];
                 else copy[label] = copy[label] ?? 5;
                 update({ sensitivities: copy });
+                // Track sensitivity checkbox toggle
+                trackEvent("sensitivity_toggled", {
+                  step_id: step,
+                  step_label: "Comfort",
+                  sensitivity_label: label,
+                  action: checked ? "checked" : "unchecked",
+                  value: checked ? copy[label] : undefined,
+                });
                 // Clear error when a sensitivity is checked
                 if (errors.sensitivities && checked) {
                   setErrors((prev) => {
@@ -2058,16 +2285,65 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
                   });
                 }
               }}
-              onChange={(v) =>
+              onChange={(v) => {
                 update({
                   sensitivities: {
                     ...answers.sensitivities,
                     [label]: v,
                   },
-                })
-              }
+                });
+                // Track sensitivity slider change
+                trackEvent("sensitivity_rated", {
+                  step_id: step,
+                  step_label: "Comfort",
+                  sensitivity_label: label,
+                  rating_value: v,
+                });
+              }}
             />
           ))}
+        </div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm text-blue-900 mt-4">
+          <div className="flex gap-3">
+            <div className="min-w-0 flex-1 text-left">
+              <div className="font-semibold mb-2">💡 How we can plan:</div>
+              <ul className="text-xs space-y-1.5 list-disc list-inside">
+                <li>
+                  <strong>Things feeling 'off':</strong> Review clear photos and
+                  descriptions of accommodations, avoid last-minute changes
+                </li>
+                <li>
+                  <strong>Repetitive sounds or patterns:</strong> Anticipate
+                  noise levels, offer quiet spaces, avoid repetitive activities
+                  if needed
+                </li>
+                <li>
+                  <strong>Need for routine:</strong> Have detailed itineraries
+                  in advance, maintain consistent meal times, provide advance
+                  info
+                </li>
+                <li>
+                  <strong>Cleanliness:</strong> Ensure accommodations have
+                  cleaning supplies, allot time and space for judgement-free
+                  cleaning routines
+                </li>
+                <li>
+                  <strong>Perfectionism triggers:</strong> Set realistic
+                  expectations, allow flexibility, avoid overly ambitious
+                  schedules
+                </li>
+                <li>
+                  <strong>Uncertainty:</strong> Have clear information upfront,
+                  answer questions promptly, offer reassurance
+                </li>
+                <li>
+                  <strong>Checking behaviors/reassurance needs:</strong> Be
+                  available for questions, have detailed info, allow
+                  verification of plans
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -2106,6 +2382,22 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
                 className="flex-1"
               />
               <span>{answers.stairs}/10</span>
+            </div>
+          </div>
+          <div>
+            <div className="mb-1 text-sm text-slate-700">
+              Heights (elevators, hotels, viewpoints, etc.)
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={answers.heights}
+                onChange={(e) => update({ heights: e.target.value })}
+                className="flex-1"
+              />
+              <span>{answers.heights}/10</span>
             </div>
           </div>
         </div>
@@ -2377,14 +2669,22 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
               key={label}
               label={label}
               value={answers.novaRanks[label] || ""}
-              onChange={(v) =>
+              onChange={(v) => {
                 update({
                   novaRanks: {
                     ...answers.novaRanks,
                     [label]: v,
                   },
-                })
-              }
+                });
+                // Track ranking change
+                trackEvent("ranking_changed", {
+                  step_id: step,
+                  step_label: "Nova",
+                  field_name: "novaRanks",
+                  item_label: label,
+                  rank_value: v,
+                });
+              }}
             />
           ))}
         </div>
@@ -2405,6 +2705,222 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
           />
           <span>{answers.novaEnergy}/10</span>
         </div>
+      </section>
+    </div>
+  );
+
+  const renderSoloDayStep = () => (
+    <div className="space-y-6 w-full min-w-0 text-center">
+      <section className="space-y-3 text-center">
+        <h1 className="text-xl font-serif tracking-wide text-slate-900">
+          Solo Days & Personal Time
+        </h1>
+        <p className="text-sm text-slate-500">
+          Planning for some one-on-one time and personal space
+        </p>
+      </section>
+
+      <section className="space-y-3 text-center">
+        <h2 className="text-lg font-semibold text-slate-800">
+          Is Tyler interested in a solo day?
+        </h2>
+        <p className="text-xs text-slate-500 border-b border-slate-200 pb-3">
+          A day where Lib hangs with Nova, giving Tyler some solo time
+        </p>
+        {errors.tylerSoloDay && (
+          <p className="text-xs text-red-600 font-medium">
+            {errors.tylerSoloDay}
+          </p>
+        )}
+        <div className="grid gap-3 md:grid-cols-3">
+          {[
+            {
+              value: "yes",
+              label: "Yes, definitely",
+              desc: "Would love some solo time",
+              icon: "✨",
+            },
+            {
+              value: "maybe",
+              label: "Maybe",
+              desc: "Open to the idea",
+              icon: "🤔",
+            },
+            {
+              value: "no",
+              label: "Not really",
+              desc: "Prefer to stick together",
+              icon: "👨‍👩‍👧",
+            },
+          ].map((opt) => (
+            <CardOption
+              key={opt.value}
+              option={opt}
+              selected={answers.tylerSoloDay === opt.value}
+              onSelect={() => update({ tylerSoloDay: opt.value })}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3 text-center">
+        <h2 className="text-lg font-semibold text-slate-800">
+          Tyler & Nova mommy-daughter day?
+        </h2>
+        <p className="text-xs text-slate-500 border-b border-slate-200 pb-3">
+          A day where Tyler and Nova have one-on-one time together
+        </p>
+        {errors.tylerNovaDay && (
+          <p className="text-xs text-red-600 font-medium">
+            {errors.tylerNovaDay}
+          </p>
+        )}
+        <div className="grid gap-3 md:grid-cols-3">
+          {[
+            {
+              value: "yes",
+              label: "Yes, definitely",
+              desc: "Would love a mommy-daughter day",
+              icon: "💕",
+            },
+            {
+              value: "maybe",
+              label: "Maybe",
+              desc: "Open to the idea",
+              icon: "🤔",
+            },
+            {
+              value: "no",
+              label: "Not really",
+              desc: "Prefer to stick together",
+              icon: "👨‍👩‍👧",
+            },
+          ].map((opt) => (
+            <CardOption
+              key={opt.value}
+              option={opt}
+              selected={answers.tylerNovaDay === opt.value}
+              onSelect={() => update({ tylerNovaDay: opt.value })}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3 text-center">
+        <h2 className="text-lg font-semibold text-slate-800">
+          Good time for Lib to have a solo day/night?
+        </h2>
+        <p className="text-xs text-slate-500 border-b border-slate-200 pb-3">
+          For drinks, non-kid-friendly activities, or just personal time
+        </p>
+        {errors.libSoloDay && (
+          <p className="text-xs text-red-600 font-medium">
+            {errors.libSoloDay}
+          </p>
+        )}
+        <div className="grid gap-3 md:grid-cols-2">
+          {[
+            {
+              value: "yes",
+              label: "Yes, definitely",
+              desc: "Lib should have some solo time",
+              icon: "🍷",
+            },
+            {
+              value: "maybe",
+              label: "Maybe",
+              desc: "Open to the idea",
+              icon: "🤔",
+            },
+            {
+              value: "no",
+              label: "Not really",
+              desc: "Prefer to stick together",
+              icon: "👨‍👩‍👧",
+            },
+            {
+              value: "flexible",
+              label: "Flexible",
+              desc: "Whatever works best",
+              icon: "✨",
+            },
+          ].map((opt) => (
+            <CardOption
+              key={opt.value}
+              option={opt}
+              selected={answers.libSoloDay === opt.value}
+              onSelect={() => update({ libSoloDay: opt.value })}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3 text-center">
+        <h2 className="text-lg font-semibold text-slate-800">
+          When would be a good time for solo days?
+        </h2>
+        <p className="text-xs text-slate-500 border-b border-slate-200 pb-3">
+          Any timing preferences for when solo days/nights would work best?
+        </p>
+        {errors.soloDayTiming && (
+          <p className="text-xs text-red-600 font-medium">
+            {errors.soloDayTiming}
+          </p>
+        )}
+        <div className="grid gap-3 md:grid-cols-2">
+          {[
+            {
+              value: "early",
+              label: "Early in the trip",
+              desc: "Get it out of the way first",
+              icon: "🌅",
+            },
+            {
+              value: "middle",
+              label: "Middle of the trip",
+              desc: "Good break in the middle",
+              icon: "🌤️",
+            },
+            {
+              value: "late",
+              label: "Later in the trip",
+              desc: "After we've settled in",
+              icon: "🌆",
+            },
+            {
+              value: "flexible",
+              label: "Flexible",
+              desc: "Whenever works best",
+              icon: "✨",
+            },
+            {
+              value: "during-camp",
+              label: "During camp week",
+              desc: "While Nova is at Euro Space Camp",
+              icon: "🏕️",
+            },
+          ].map((opt) => (
+            <CardOption
+              key={opt.value}
+              option={opt}
+              selected={answers.soloDayTiming === opt.value}
+              onSelect={() => update({ soloDayTiming: opt.value })}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-2 text-center">
+        <h2 className="text-lg font-semibold text-slate-800">
+          Solo day notes (optional)
+        </h2>
+        <textarea
+          value={answers.soloDayNotes}
+          onChange={(e) => update({ soloDayNotes: e.target.value })}
+          className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm"
+          placeholder="Any thoughts on solo days - what you'd like to do, timing preferences, concerns, etc..."
+          rows={3}
+        />
       </section>
     </div>
   );
@@ -2473,6 +2989,8 @@ We’ll prioritize vegan-friendly restaurants, bakeries, and markets, and keep s
         return renderParisStep();
       case "nova":
         return renderNovaStep();
+      case "solo":
+        return renderSoloDayStep();
       case "summary":
         return renderSummaryStep();
       default:

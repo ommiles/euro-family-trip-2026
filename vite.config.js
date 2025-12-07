@@ -6,4 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: "/euro-family-trip-2026/",
+  build: {
+    sourcemap: false,
+  },
 });
